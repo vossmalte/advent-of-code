@@ -56,6 +56,28 @@ def main(lines):
             result += id
     return result
 
+        
+def powerOfSet(set):
+    result=1
+    for color in list(set):
+        result*=set[color]
+    return result
+
+def main2(lines):
+    # no empty lines
+    lines = [line.replace("\n","") for line in lines if line != "\n"]
+
+    result = 0
+    for line in lines:
+        (id, game) = parseLine(line)
+        draws = parseGame(game)
+        min_dict = {}
+        for color in list(maxNumberOfCubes):
+            min_dict[color] = max([draw[color] for draw in draws])
+        # print(min_dict)
+        result += powerOfSet(min_dict)
+    return result
+
 
 if __name__ == "__main__":
     if True:
@@ -66,6 +88,14 @@ if __name__ == "__main__":
         result = main(file.readlines())
         if not result == 8:
             print("first test failed")
+    with open("input-second.txt") as file:
+        result = main2(file.readlines())
+        if not result == 2286:
+            print("second test failed")
     
     with open("input.txt") as file:
-        result1 = main(file.readlines())
+        # result1 = main(file.readlines())
+        result2 = main2(file.readlines())
+    
+        print(result2)
+        pass
