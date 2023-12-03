@@ -1,5 +1,8 @@
 import fs from "fs";
 
+type Position = readonly [number, number];
+type NumberLength = number & { id: never };
+
 // match all that is not word or dot
 const specialCharRegex = /[^\w\.]/g;
 
@@ -11,9 +14,9 @@ const numberRegex = /\d+/g;
 
 // is number next to special char?
 function neighbors(
-  [numberX, numberY]: readonly [number, number],
-  numberLength: number,
-  [specialCharX, specialCharY]: readonly [number, number]
+  [numberX, numberY]: Position,
+  numberLength: NumberLength,
+  [specialCharX, specialCharY]: Position
 ): boolean {
   return (
     Math.abs(specialCharY - numberY) < 2 &&
@@ -26,12 +29,16 @@ function main(lines: String[]): number {
   const numberMatches = lines.flatMap((line, index) =>
     [...line.matchAll(numberRegex)].map(
       (match) =>
-        [[match.index!, index], match[0].length, parseInt(match[0])] as const
+        [
+          [match.index!, index] as Position,
+          match[0].length as NumberLength,
+          parseInt(match[0]),
+        ] as const
     )
   );
   const specialMatchesPositions = lines.flatMap((line, index) =>
     [...line.matchAll(specialCharRegex)].map(
-      (match) => [match.index!, index] as const
+      (match) => [match.index!, index] as Position
     )
   );
 
@@ -53,11 +60,17 @@ function main2(lines: String[]): number {
   const numberMatches = lines.flatMap((line, index) =>
     [...line.matchAll(numberRegex)].map(
       (match) =>
-        [[match.index!, index], match[0].length, parseInt(match[0])] as const
+        [
+          [match.index!, index] as Position,
+          match[0].length as NumberLength,
+          parseInt(match[0]),
+        ] as const
     )
   );
   const starPositions = lines.flatMap((line, index) =>
-    [...line.matchAll(starRegex)].map((match) => [match.index!, index] as const)
+    [...line.matchAll(starRegex)].map(
+      (match) => [match.index!, index] as Position
+    )
   );
 
   // not necessary, just filter by results.length === 2
