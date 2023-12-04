@@ -14,17 +14,13 @@ function main(lines: String[]): number {
     return [split[1] ?? "x", split[2] ?? "y"] as const;
   });
 
-  // console.log(parsed);
-
   const lists = parsed.map((numbers) => numbers.map((n) => n.split(/ +/)));
-
-  // console.log(lists);
 
   const countWinners = lists.map(([winningNumbers, myNumbers]) =>
     myNumbers.reduce((p, c) => p + (winningNumbers.includes(c) ? 1 : 0), 0),
   );
 
-  const highlightWinners = lists.map(([w, ns]) =>
+  const _highlightWinners = lists.map(([w, ns]) =>
     ns.map((n) => (w.includes(n) ? highlight(n) : n)),
   );
 
@@ -32,20 +28,45 @@ function main(lines: String[]): number {
 
   const result = powers.reduce((p, c) => p + c);
 
-  lists.forEach(([winningNumbers], index) =>
-    console.log(
-      index,
-      ":",
-      winningNumbers.join(" "),
-      "|",
-      highlightWinners[index].join(" "),
-      "->",
-      countWinners[index],
-      powers[index],
-    ),
-  );
-  console.log(result);
+  // // pretty print :)
+  // lists.forEach(([winningNumbers], index) =>
+  //   console.log(
+  //     index,
+  //     ":",
+  //     winningNumbers.join(" "),
+  //     "|",
+  //     _highlightWinners[index].join(" "),
+  //     "->",
+  //     countWinners[index],
+  //     powers[index],
+  //   ),
+  // );
   return result;
+}
+
+type ID = number & { id: never };
+
+function main2(lines: string[]): number {
+  const parsed = lines.filter(Boolean).map((line) => {
+    const split = line.replace(/ +/g, " ").split(/.*: | \| /);
+    return [split[1] ?? "x", split[2] ?? "y"] as const;
+  });
+
+  const lists = parsed.map((numbers) => numbers.map((n) => n.split(/ +/)));
+
+  const countWinners = lists.map(([winningNumbers, myNumbers]) =>
+    myNumbers.reduce((p, c) => p + (winningNumbers.includes(c) ? 1 : 0), 0),
+  );
+
+  const countMap = new Map(countWinners.map((_, index) => [index as ID, 1]));
+
+  countMap.forEach((v, k, map) => {
+    for (let i = k + 1; i <= k + countWinners[k]; i++) {
+      map.set(i as ID, (map.get(i as ID) ?? 0) + v);
+    }
+  });
+
+  return [...countMap.values()].reduce((a, b) => a + b);
 }
 
 const lines1 = fs
@@ -53,9 +74,9 @@ const lines1 = fs
   .split("\n");
 const result1 = main(lines1);
 if (result1 !== 13) console.warn("test 1 failed");
-// const result2 = main2(lines1);
-// if (result2 !== 467835) console.warn("test 2 failed");
+const result2 = main2(lines1);
+if (result2 !== 30) console.warn("test 2 failed");
 
 const lines = fs.readFileSync("input.txt", { encoding: "utf8" }).split("\n");
 console.log(highlight("puzzle 1:"), main(lines));
-// console.log("puzzle 2: ", main2(lines));
+console.log("puzzle 2: ", main2(lines));
