@@ -13,9 +13,8 @@ main = do
     let ls = lines contents
     print $ solution1 ls
 
--- part 2
--- let result2 = discreteDurationWidth $ winningHoldDurationRadius (51926890, 222203111261225)
--- print result2
+    -- part 2
+    print $ solution2 ls
 
 -- sorted from strongest to weakest
 -- this might enable using find to find a first match
@@ -36,19 +35,38 @@ testR string regex = string =~ regex :: Bool
 findHandType :: String -> Int
 findHandType hand = length handTypeRegexs - fromMaybe (length handTypeRegexs) (findIndex (isJust . find (testR $ sort hand)) handTypeRegexs)
 
+findBestHandType :: [Char] -> Int
+findBestHandType hand = maximum $ map (findHandType . (\c -> replace "J" [c] hand)) cardOrdering
+
 cardOrdering :: [Char]
 cardOrdering = reverse "AKQJT98765432"
+
+cardOrdering2 :: [Char]
+cardOrdering2 = reverse "AKQT98765432J"
 
 compareEqualType :: String -> String -> Ordering
 compareEqualType [] [] = EQ
 compareEqualType (x : xs) (y : ys)
     | x == y = compareEqualType xs ys
     | otherwise = compare (elemIndex x cardOrdering) (elemIndex y cardOrdering)
+compareEqualType _ _ = EQ
+
+compareEqualType2 :: String -> String -> Ordering
+compareEqualType2 [] [] = EQ
+compareEqualType2 (x : xs) (y : ys)
+    | x == y = compareEqualType2 xs ys
+    | otherwise = compare (elemIndex x cardOrdering2) (elemIndex y cardOrdering2)
+compareEqualType2 _ _ = EQ
 
 compareHand :: String -> String -> Ordering
 compareHand a b
     | findHandType a == findHandType b = compareEqualType a b
     | otherwise = compare (findHandType a) (findHandType b)
+
+compareHand2 :: String -> String -> Ordering
+compareHand2 a b
+    | findBestHandType a == findBestHandType b = compareEqualType2 a b
+    | otherwise = compare (findBestHandType a) (findBestHandType b)
 
 toInt :: String -> Int
 toInt x = read x :: Int
@@ -56,5 +74,7 @@ toInt x = read x :: Int
 parseLine :: String -> (String, Int)
 parseLine = ((\(a : b : _) -> (a, toInt b)) . words)
 
--- solution1 :: [String] -> Int
+solution1 :: [String] -> Int
 solution1 ls = foldl' (+) 0 $ zipWith (\a b -> a * snd b) [1 ..] $ sortBy (\a b -> compareHand (fst a) (fst b)) (map parseLine ls)
+solution2 :: [String] -> Int
+solution2 ls = foldl' (+) 0 $ zipWith (\a b -> a * snd b) [1 ..] $ sortBy (\a b -> compareHand2 (fst a) (fst b)) (map parseLine ls)
