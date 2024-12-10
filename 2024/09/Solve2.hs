@@ -13,18 +13,18 @@ isFile = ((-1) /=) . fst
 
 compress :: [(Int, Int)] -> [(Int, Int)]
 compress [] = []
-compress disk = foldl' (flip insertFile) disk $ files disk
+-- compress disk = foldl' (flip insertFile) disk $ files disk
+compress disk = foldr insertFile disk $ filter isFile disk
 
 solve2 = sum . zipWith (*) [0 ..] . flatten . compress . decode 0
 
 files disk = reverse $ filter isFile disk
 
 removeFile :: (Int, Int) -> [(Int, Int)] -> [(Int, Int)]
-removeFile file = map $ replace file
- where
-  replace (i, _) (i', s')
-    | i == i' = (-1, s')
-    | otherwise = (i', s')
+removeFile file [] = []
+removeFile file@(i, _) ((i', s') : restDisk)
+  | i == i' = (-1, s') : restDisk
+  | otherwise = (i', s') : removeFile file restDisk
 
 insertFile :: (Int, Int) -> [(Int, Int)] -> [(Int, Int)]
 -- no disk = done
@@ -43,6 +43,29 @@ insertFile (id1, s1) ((id2, s2) : restDisk)
   -- next block is some file = leave it
   | otherwise = (id2, s2) : insertFile (id1, s1) restDisk
 
+-- https://stackoverflow.com/questions/20568276/implement-insert-in-haskell-with-foldr
+para :: (a -> [a] -> r -> r) -> r -> [a] -> r
+para c n (x : xs) = c x xs (para c n xs)
+
+insertFileP :: (Int, Int) -> [(Int, Int)] -> [(Int, Int)]
+insertFileP file@(id, size) disk = takeWhile isFile disk ++ para inst [] (dropWhile isFile disk)
+ where
+  inst (i, s) restDisk acc
+    | i == id = file : restDisk
+    | i == -1 && s == size = (id, size) : removeFile file restDisk
+    | i == -1 && s > size = (id, size) : (-1, s - size) : removeFile file restDisk
+    | otherwise = (i, s) : acc
+
+insertFile' :: (Int, Int) -> [(Int, Int)] -> [(Int, Int)]
+insertFile' file [] = []
+insertFile' file@(id, size) disk = foldr insertF [] $ init $ tails disk
+ where
+  insertF ((i, s) : xs) acc
+    | i == id = file : xs
+    | i == -1 && s == size = (id, size) : removeFile file xs
+    | i == -1 && s > size = (id, size) : (-1, s - size) : removeFile file xs
+    | otherwise = (i, s) : acc
+
 flatten = concatMap expand
  where
   expand (i, s)
@@ -51,7 +74,7 @@ flatten = concatMap expand
 
 -- debug stuff
 
-steps disk = disk : zipWith insertFile (files disk) (steps disk)
+steps disk = disk : zipWith insertFile' (files disk) (steps disk)
 
 prettify = concat . concatMap str
  where
