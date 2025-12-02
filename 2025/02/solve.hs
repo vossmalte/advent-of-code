@@ -3,5 +3,14 @@ isRepeating x = start == end
     str = show x
     (start, end) = splitAt (length str `div` 2) str
 
-solve :: [[Integer]] -> Integer
-solve = sum . concatMap (filter isRepeating)
+solvePart1 :: [[Integer]] -> Integer
+solvePart1 = sum . concatMap (filter isRepeating)
+
+repeatPrefix str len = concat $ replicate (length str `div` len) (take len str)
+
+isMultiRepeating x = any ((==str) . repeatPrefix str) [1..length str - 1]
+  where
+    str = show x
+
+solvePart2 :: [[Integer]] -> Integer
+solvePart2 = sum . concatMap (filter isMultiRepeating)
