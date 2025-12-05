@@ -6,8 +6,9 @@ const ROLL_OF_PAPER: char = '@';
 fn main() {
     println!(
         "Part 1: {:?}",
-        count_available_toilet_roles(parse_input_file(INPUT_FILE))
-    )
+        part1(parse_input_file(INPUT_FILE))
+    );
+    println!("Part 2: {:?}", part2(parse_input_file(INPUT_FILE)));
 }
 
 fn parse_input_file(file: &str) -> Vec<Vec<char>> {
@@ -16,6 +17,10 @@ fn parse_input_file(file: &str) -> Vec<Vec<char>> {
         .lines()
         .map(|l| l.chars().collect())
         .collect()
+}
+
+fn flatten_input(input: Vec<Vec<char>>) -> Option<(Vec<char>, usize)> {
+    Some((input.concat(), input.first()?.len()))
 }
 
 fn get_neighbors(position: usize, width: usize) -> Vec<usize> {
@@ -31,15 +36,12 @@ fn get_neighbors(position: usize, width: usize) -> Vec<usize> {
         .collect()
 }
 
-fn count_available_toilet_roles(input: Vec<Vec<char>>) -> Option<usize> {
-    let _height = input.len();
-    let width = input.first()?.len();
+fn get_accessible_paper_roles(input: &[char], width: usize) -> Option<Vec<usize>> {
     let paper_positions: Vec<_> = input
-        .into_iter()
-        .flatten()
+        .iter()
         .enumerate()
         .filter_map(|(i, c)| {
-            if c == ROLL_OF_PAPER {
+            if *c == ROLL_OF_PAPER {
                 return Some(i);
             }
             None
@@ -47,30 +49,75 @@ fn count_available_toilet_roles(input: Vec<Vec<char>>) -> Option<usize> {
         .collect();
     Some(
         paper_positions
-            .iter()
-            .filter(|&&p| {
-                4 > get_neighbors(p, width)
+            .clone()
+            .into_iter()
+            .filter(|p| {
+                4 > get_neighbors(*p, width)
                     .iter()
                     .filter(|pn| paper_positions.contains(pn))
                     .count()
             })
-            .count(),
+            .collect(),
     )
+}
+
+fn part1(input: Vec<Vec<char>>) -> Option<usize> {
+    if let Some((grid, width)) = flatten_input(input) {
+        Some(get_accessible_paper_roles(&grid, width)?.len())
+    } else {
+        None
+    }
+}
+
+fn part2(input: Vec<Vec<char>>) -> Option<usize> {
+    if let Some((grid, width)) = flatten_input(input) {
+        Some(iteratively_count_paper_roles(&grid, width)?)
+    } else {
+        None
+    }
+}
+
+fn iteratively_count_paper_roles(input: &[char], width: usize) -> Option<usize> {
+    let accessible_paper_positions = get_accessible_paper_roles(input, width)?;
+    let num_of_taken_rolls = accessible_paper_positions.len();
+    if num_of_taken_rolls == 0 {
+        return Some(0);
+    }
+
+    let updated_grid = input
+        .iter()
+        .enumerate()
+        .map(|(i, c)| {
+            if accessible_paper_positions.contains(&i) {
+                'x'
+            } else {
+                *c
+            }
+        })
+        .collect::<Vec<char>>();
+    println!("Collected {} paper rolls", num_of_taken_rolls);
+    Some(num_of_taken_rolls + iteratively_count_paper_roles(&updated_grid.to_vec(), width)?)
 }
 
 #[cfg(test)]
 mod test {
-    use crate::count_available_toilet_roles;
+    use crate::part1;
     use crate::get_neighbors;
     use crate::parse_input_file;
+    use crate::part2;
 
     const INPUT_TEST_FILE: &str = "input-test.txt";
+
+    #[test]
+    fn test_part2() {
+        assert_eq!(Some(43), part2(parse_input_file(INPUT_TEST_FILE)));
+    }
 
     #[test]
     fn test_part1() {
         assert_eq!(
             Some(13),
-            count_available_toilet_roles(parse_input_file(INPUT_TEST_FILE))
+            part1(parse_input_file(INPUT_TEST_FILE))
         )
     }
 
