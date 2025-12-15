@@ -1,6 +1,6 @@
 use graph::Graph;
 use itertools::Itertools;
-use std::fs;
+use std::{collections::HashSet, fs};
 
 const INPUT_FILE: &str = "input.txt";
 
@@ -52,8 +52,27 @@ fn part1(positions: Vec<Position>, num_of_connections: usize) -> usize {
         .product()
 }
 
-fn part2(_input: Vec<Position>) -> Option<usize> {
-    Some(1)
+fn part2(positions: Vec<Position>) -> usize {
+    let edges = positions
+        .clone()
+        .into_iter()
+        .cartesian_product(positions.clone())
+        .sorted_by(|(a1, a2), (b1, b2)| {
+            Ord::cmp(&distance_squared(a1, a2), &distance_squared(b1, b2))
+        })
+        .skip_while(|(a, b)| a == b)
+        .step_by(2);
+
+    let mut graph = Graph::from_vertices(HashSet::from_iter(positions));
+    for (a, b) in edges {
+        graph.add_edge(a, b);
+        graph.add_edge(b, a);
+        if !graph.is_disjoint() {
+            return a.0 * b.0;
+        }
+    }
+
+    0
 }
 
 #[cfg(test)]
@@ -66,7 +85,7 @@ mod test {
 
     #[test]
     fn test_part2() {
-        assert_eq!(Some(25272), part2(parse_input_file(INPUT_TEST_FILE)));
+        assert_eq!(25272, part2(parse_input_file(INPUT_TEST_FILE)));
     }
 
     #[test]

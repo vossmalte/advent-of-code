@@ -19,6 +19,13 @@ impl<V: Hash + Eq + Copy> Graph<V> {
         }
     }
 
+    pub fn from_vertices(vertices: HashSet<V>) -> Self {
+        Graph {
+            vertices: vertices,
+            edges: HashMap::new(),
+        }
+    }
+
     pub fn from_double_edges(edges: Vec<(V, V)>) -> Self {
         let mut g = Graph::new();
         for (start, end) in edges {
@@ -30,6 +37,13 @@ impl<V: Hash + Eq + Copy> Graph<V> {
 
     pub fn vertices(&self) -> &HashSet<V> {
         &self.vertices
+    }
+
+    pub fn is_disjoint(&self) -> bool {
+        if let Some(root) = self.vertices.iter().next() {
+            return self.vertices.len() != self.reachable_vertices(*root).len();
+        }
+        panic!("there should be some root")
     }
 
     pub fn disjoint_subgraphs(&self) -> Vec<HashSet<V>> {
@@ -62,7 +76,7 @@ impl<V: Hash + Eq + Copy> Graph<V> {
         visited
     }
 
-    fn add_edge(&mut self, start: V, end: V) {
+    pub fn add_edge(&mut self, start: V, end: V) {
         self.vertices.insert(start);
         self.vertices.insert(end);
         self.edges
