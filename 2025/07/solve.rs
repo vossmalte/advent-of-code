@@ -41,8 +41,39 @@ fn part1(input: String) -> Option<usize> {
     Some(num_hits)
 }
 
-fn part2(_input: String) -> Option<usize> {
-    Some(1)
+fn part2(input: String) -> usize {
+    let mut lines = input.lines();
+    let start = lines
+        .next()
+        .unwrap_or("")
+        .chars()
+        .map(|c| match c {
+            'S' => 1,
+            _ => 0,
+        })
+        .collect::<Vec<usize>>();
+    let beams = lines.map(|l| l.chars()).fold(start, |beams, splitters| {
+        splitters
+            .zip(beams)
+            .map(|x| match x {
+                ('^', b) => (b, 0, b),
+                (_, b) => (0, b, 0),
+            })
+            .fold((vec![], 0), |(mut folded, for_next), current| {
+                match current {
+                    (0, b, 0) => folded.push(b + for_next),
+                    (b, 0, _) => {
+                        let prev = folded.pop().unwrap_or(0);
+                        folded.push(prev + b);
+                        folded.push(for_next);
+                    }
+                    _ => folded.push(for_next),
+                };
+                (folded, current.2)
+            })
+            .0
+    });
+    beams.iter().sum()
 }
 
 #[cfg(test)]
@@ -55,7 +86,7 @@ mod test {
 
     #[test]
     fn test_part2() {
-        assert_eq!(Some(40), part2(parse_input_file(INPUT_TEST_FILE)));
+        assert_eq!(40, part2(parse_input_file(INPUT_TEST_FILE)));
     }
 
     #[test]
